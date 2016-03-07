@@ -10,14 +10,15 @@
 *******************************************************************************/
 
 #ifdef _UTIL_MAIN_
-#define EXTERN
+int	Debug = 0; // Debug flag
+int	Daemon = 0; // Daemon flag
+int	Verbose = 0; // Verbos flag
 #else
-#define EXTERN extern
+extern int	Debug; // Debug flag
+extern int	Daemon; // Daemon flag
+extern int	Verbose; // Verbos flag
 #endif
 
-EXTERN int	Debug; // Debug flag
-EXTERN int	Daemon; // Daemon flag
-EXTERN int	Verbose; // Verbos flag
 
 #undef	EXTERN
 
