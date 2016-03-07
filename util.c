@@ -16,24 +16,9 @@
 #include <strings.h>
 #include <signal.h>
 #include <limits.h>
-#include <float.h>
-#include <math.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <libgen.h>
 #include <fts.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
-#include <sys/time.h>
-#include <sys/mman.h>
-#include <sys/wait.h>
-#include <sys/event.h>
-#include <netinet/in.h>
 
 #define	_UTIL_MAIN_
 #include "util.h"

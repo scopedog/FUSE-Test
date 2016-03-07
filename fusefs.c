@@ -17,15 +17,11 @@
 #include <limits.h>
 #include <dirent.h>
 #include <unistd.h>
-#include <pthread.h>
 #include <signal.h>
 #include <libgen.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
-#include <sys/queue.h>
 #define	FUSE_USE_VERSION	29 // Must be defined before fuse.h
 #include <fuse.h>
 #include "fusetest.h"

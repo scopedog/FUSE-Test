@@ -12,7 +12,6 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/types.h>
-#include <openssl/evp.h>
 #define FUSE_USE_VERSION	29 // Must be defined before fuse.h
 #include <fuse.h>
 #define _FUSETEST_MAIN_
