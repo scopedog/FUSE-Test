@@ -7,7 +7,7 @@ OBJS		= $(SRCS:.c=.o)
 LIBS		= `pkg-config --libs fuse`
 LIBPATH		= -L/usr/local/lib
 INCPATH		= -I/usr/local/include
-CFLAGS		= -Wall -O2 $(INCPATH) -g `pkg-config --cflags fuse`
+CFLAGS		= -Wall -Wno-unused-result -O2 $(INCPATH) -g `pkg-config --cflags fuse`
 
 ##################################################################
 

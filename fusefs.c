@@ -134,7 +134,7 @@ static int
 FuseOpen(const char *path, struct fuse_file_info *fi)
 {
 	char	lpath[PATH_MAX];
-	int	fd, err = 0, flags, mode;
+	int	fd, err = 0, flags;
 
 	DebugMsg("FuseOpen: path: %s, flags: %d\n", path, fi->flags);
 
@@ -146,7 +146,6 @@ FuseOpen(const char *path, struct fuse_file_info *fi)
 
 	// Get mode
 	flags = fi->flags;
-	mode = flags & O_ACCMODE;
 
 	// Open
 	DebugMsg("  %s: open O_WRONLY\n", path);
@@ -264,7 +263,7 @@ FuseFtruncate(const char *path, off_t size, struct fuse_file_info *fi)
 
 	// Ftruncate
 	errno = 0;
-	ftruncate(fd, size);
+	(void)ftruncate(fd, size);
 
 	return -errno;
 }
