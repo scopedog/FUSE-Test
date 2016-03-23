@@ -21,7 +21,9 @@
 #include <libgen.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/param.h>
+#include <sys/mount.h>
 #define	FUSE_USE_VERSION	29 // Must be defined before fuse.h
 #include <fuse.h>
 #include "fusetest.h"
@@ -46,7 +48,7 @@ FuseGetattr(const char *path, struct stat *sb)
 	char	lpath[PATH_MAX];
 	int	err = 0;
 
-	//DebugMsg("FuseGetattr: path: %s (%p)\n", path, path);
+	DebugMsg("FuseGetattr: path: %s\n", path);
 
 	// Set path
 	snprintf(lpath, PATH_MAX, "%s/%s", DATA_PATH, path);
@@ -60,6 +62,29 @@ FuseGetattr(const char *path, struct stat *sb)
 			lpath, strerror(errno));
 */
 		Log("Error: FuseGetattr: %s: %s", path, strerror(errno));
+		err = errno;
+	}
+
+	return -err;
+}
+
+// Statfs
+static int
+FuseStatfs(const char *path, struct statvfs *sf)
+{
+	char	lpath[PATH_MAX];
+	int	err = 0;
+
+	DebugMsg("FuseStatfs: path: %s\n", path);
+
+	// Set path
+	snprintf(lpath, PATH_MAX, "%s/%s", DATA_PATH, path);
+	//DebugMsg("FuseStatfs: lpath: %s\n", lpath);
+
+	// Statfs
+	errno = 0;
+	if (statvfs(lpath, sf)) {
+		Log("Error: Statfs: %s: %s", path, strerror(errno));
 		err = errno;
 	}
 
@@ -149,6 +174,8 @@ static int
 FuseReleasedir(const char *path, struct fuse_file_info *fi)
 {
 	DIR	*dp = (DIR *)fi->fh;
+
+	DebugMsg("FuseReleasedir: path: %s\n", path);
 
 	if (dp != NULL) {
 		closedir(dp);
@@ -463,6 +490,7 @@ FuseLoop(int argc, char *argv[])
 {
 	static struct fuse_operations fuse_op = {
 		.getattr = FuseGetattr,
+		.statfs = FuseStatfs,
 		.opendir = FuseOpendir,
 		.readdir = FuseReaddir,
 		.releasedir = FuseReleasedir,
