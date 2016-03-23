@@ -46,13 +46,19 @@ FuseGetattr(const char *path, struct stat *sb)
 	char	lpath[PATH_MAX];
 	int	err = 0;
 
-	DebugMsg("FuseGetattr: path: %s\n", path);
+	//DebugMsg("FuseGetattr: path: %s (%p)\n", path, path);
 
 	// Set path
 	snprintf(lpath, PATH_MAX, "%s/%s", DATA_PATH, path);
+	//DebugMsg("FuseGetattr: lpath: %s\n", lpath);
 
 	// Stat
+	errno = 0;
 	if (stat(lpath, sb)) {
+/*
+		DebugMsg("Error: FuseGetattr: lpath: %s\n",
+			lpath, strerror(errno));
+*/
 		Log("Error: FuseGetattr: %s: %s", path, strerror(errno));
 		err = errno;
 	}
@@ -60,20 +66,15 @@ FuseGetattr(const char *path, struct stat *sb)
 	return -err;
 }
 
-// Read dir
+// Open dir
 static int 
-FuseReaddir(const char *path, void *fuse_buf, fuse_fill_dir_t filler,
-	    off_t offset, struct fuse_file_info *fi)
+FuseOpendir(const char *path, struct fuse_file_info *fi)
 {
-	char		lpath[PATH_MAX], *name;
-	int		err = 0;
-	DIR		*dp = NULL;
-	struct dirent	*de;
+	char	lpath[PATH_MAX];
+	int	err = 0;
+	DIR	*dp = NULL;
 
-	(void)offset;
-	(void)fi;
-
-	DebugMsg("FuseReaddir: path: %s\n", path);
+	DebugMsg("FuseOpendir: path: %s\n", path);
 
 	// Set local path
 	snprintf(lpath, PATH_MAX, "%s/%s", DATA_PATH, path);
@@ -84,6 +85,42 @@ FuseReaddir(const char *path, void *fuse_buf, fuse_fill_dir_t filler,
 			lpath, strerror(errno));
 		err = errno;
 		goto END;
+	}
+
+END:	// Finalize
+	fi->fh = (uint64_t)dp;
+
+	return -err;
+}
+
+// Read dir
+static int 
+FuseReaddir(const char *path, void *fuse_buf, fuse_fill_dir_t filler,
+	    off_t offset, struct fuse_file_info *fi)
+{
+	char		*name;
+	int		err = 0;
+	DIR		*dp = NULL;
+	struct dirent	*de;
+
+	(void)offset;
+
+	DebugMsg("FuseReaddir: path: %s\n", path);
+
+	// Open dir if opendir was not called
+	if ((dp = (DIR *)fi->fh) == NULL) {
+		char	lpath[PATH_MAX];
+
+		// Set local path
+		snprintf(lpath, PATH_MAX, "%s/%s", DATA_PATH, path);
+
+		// Open dir
+		if ((dp = opendir(lpath)) == NULL) {
+			Log("Error: FuseReaddir: %s: opendir: %s",
+				lpath, strerror(errno));
+			err = errno;
+			goto END;
+		}
 	}
 
 	// Scan dir
@@ -100,11 +137,24 @@ FuseReaddir(const char *path, void *fuse_buf, fuse_fill_dir_t filler,
 	}
 
 END:	// Finalize
-	if (dp != NULL) {
+	if (fi->fh == 0 && dp != NULL) {
 		closedir(dp);
 	}
 
 	return -err;
+}
+
+// Close dir
+static int 
+FuseReleasedir(const char *path, struct fuse_file_info *fi)
+{
+	DIR	*dp = (DIR *)fi->fh;
+
+	if (dp != NULL) {
+		closedir(dp);
+	}
+
+	return 0;
 }
 
 // Create
@@ -413,7 +463,9 @@ FuseLoop(int argc, char *argv[])
 {
 	static struct fuse_operations fuse_op = {
 		.getattr = FuseGetattr,
+		.opendir = FuseOpendir,
 		.readdir = FuseReaddir,
+		.releasedir = FuseReleasedir,
 		.create = FuseCreate,
 		.open = FuseOpen,
 		.read = FuseRead,
