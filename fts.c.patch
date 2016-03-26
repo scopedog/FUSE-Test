@@ -1,0 +1,49 @@
+--- lib/libc.org/gen/fts.c	2015-08-17 16:34:05.153196000 -0700
++++ lib/libc/gen/fts.c	2016-03-25 15:10:25.382716000 -0700
+@@ -214,6 +214,11 @@
+ 	    (sp->fts_rfd = _open(".", O_RDONLY | O_CLOEXEC, 0)) < 0)
+ 		SET(FTS_NOCHDIR);
+ 
++	// Hiroshi Nishida -- Check filesystem type
++	if (statfs(root->fts_accpath, &priv->ftsp_statfs) == -1) {
++		goto mem3;
++	}
++
+ 	return (sp);
+ 
+ mem3:	fts_lfree(root);
+@@ -1123,6 +1128,7 @@
+ {
+ 	int ret, oerrno, newfd;
+ 	struct stat sb;
++	struct _fts_private *priv = (struct _fts_private *)sp;
+ 
+ 	newfd = fd;
+ 	if (ISSET(FTS_NOCHDIR))
+@@ -1130,14 +1136,18 @@
+ 	if (fd < 0 && (newfd = _open(path, O_RDONLY | O_DIRECTORY |
+ 	    O_CLOEXEC, 0)) < 0)
+ 		return (-1);
+-	if (_fstat(newfd, &sb)) {
+-		ret = -1;
+-		goto bail;
+-	}
+-	if (p->fts_dev != sb.st_dev || p->fts_ino != sb.st_ino) {
+-		errno = ENOENT;		/* disinformation */
+-		ret = -1;
+-		goto bail;
++
++	// Hiroshi Nishida -- Skip strict check for FUSE filesystem
++	if (priv->ftsp_statfs. f_type != 0xed) {
++		if (_fstat(newfd, &sb)) {
++			ret = -1;
++			goto bail;
++		}
++		if (p->fts_dev != sb.st_dev || p->fts_ino != sb.st_ino) {
++			errno = ENOENT;		/* disinformation */
++			ret = -1;
++			goto bail;
++		}
+ 	}
+ 	ret = fchdir(newfd);
+ bail:
